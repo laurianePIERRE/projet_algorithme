@@ -72,7 +72,7 @@ def calcul_angle_abscisse(point, pivot):
 
 
 
-def trie_angle(coordonnees):
+def trie_angleb(coordonnees):
     order=[]
     # definir pivot
     pivot = coordonnee_gauche(coordonnees)
@@ -97,12 +97,35 @@ def trie_angle(coordonnees):
         pivot = next_point
     return order # liste des points composants envellope convexe
 
+
+def trie_angle(coordonnees):
+    # Déterminer le point le plus à gauche comme pivot initial
+    pivot = coordonnee_gauche(coordonnees)
+    enveloppe_convexe = [pivot]  # Liste des points de l'enveloppe convexe
+    coordonnees.remove(pivot)  # Supprimer le pivot de la liste des points
+    while coordonnees:
+        angles = []
+        for point in coordonnees:
+            angle = calcul_angle_abscisse(point, pivot)
+            angles.append((point, angle))
+        # Trier les points par leur angle par rapport au pivot
+        angles.sort(key=lambda x: x[1])
+        # Ajouter le point avec l'angle le plus faible à la liste d'enveloppe convexe
+        next_point = angles[0][0]
+        enveloppe_convexe.append(next_point)
+        # Retirer le point ajouté de la liste des points
+        coordonnees.remove(next_point)
+        # Définir le nouveau pivot pour la prochaine itération
+        pivot = next_point
+    return enveloppe_convexe  # Retourner la liste des points de l'enveloppe convexe
+
+
 #generate_fich_points()
 def plot_point_envellope():
     points = list_coordonnes("points_random.txt")
     x_coords = [point[0] for point in points]
     y_coords = [point[1] for point in points]
-    enveloppe_convexe = trie_angle(points)
+    enveloppe_convexe = jarvis_march(points)
     print(points)
 
     x_enveloppe = [point[0] for point in enveloppe_convexe]
@@ -122,6 +145,41 @@ def plot_point_envellope():
 
     print("Fichier créé: enveloppe_convexe.png")
 
+def jarvis_march(points):
+    # Fonction pour trouver l'orientation de trois points
+    def orientation(p, q, r):
+        val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+        if val == 0:
+            return 0  # Collinéaire
+        elif val > 0:
+            return 1  # Sens horaire
+        else:
+            return 2  # Sens anti-horaire
+
+    # Point le plus à gauche
+    leftmost = min(points)
+    hull = []
+    p = leftmost
+    q = None
+    while True:
+        hull.append(p)
+        q = points[0]
+        for r in points:
+            if r == p:
+                continue
+            o = orientation(p, q, r)
+            if o == 2 or (o == 0 and ((p[0] - r[0])**2 + (p[1] - r[1])**2 > (p[0] - q[0])**2 + (p[1] - q[1])**2)):
+                q = r
+        p = q
+        if p == leftmost:
+            break
+    return hull
+
+# Exemple d'utilisation :
+points = [(1, 2), (3, 4), (5, 6), (7, 8)]
+enveloppe_convexe = jarvis_march(points)
+print("Enveloppe convexe :", enveloppe_convexe)
+
 
 coordonnees = list_coordonnes("points_random.txt")
 print(coordonnees)
@@ -131,4 +189,3 @@ print(coordonnees[0])
 print(calcul_angle_abscisse(coordonnees[0],coordonnee_initiale))
 print(trie_angle(coordonnees))
 plot_point_envellope()
-0
